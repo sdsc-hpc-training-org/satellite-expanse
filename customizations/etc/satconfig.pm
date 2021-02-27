@@ -10,7 +10,7 @@ package satconfig;
 our $pidfile = '/var/run/httpd/httpd.pid';
 
 # location of the database file
-our $dbfile = $basename . '/../var/state.sqlite';
+our $dbfile = $basename . '/var/secrets/satellite-state/state.sqlite';
 
 # allowed subnet for reverse-proxy targets
 # format: subnet/mask
