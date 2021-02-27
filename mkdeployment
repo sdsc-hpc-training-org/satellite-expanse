@@ -1,34 +1,59 @@
 #!/bin/bash
 
 # mkdeployment 
-# turn the current repo into a production deployment
-# note: this removes the .git directories, effectively de-gitting the
-# directory.
+# produce a deployment in directory called deployment.
 
 set -u
 umask 0022
 
-# make sure this is what we want.
-CONFIRM=''
-CONFIRMCOUNT=3
-while [[ ${CONFIRM} != 'y' && ${CONFIRM} != 'Y' ]]; do
-  echo "This will remove the .git directories and merge customizations." 1>&2
-  echo "It CANNOT BE UNDONE, you will need to re-clone the repo." 1>&2
-  printf "%s" "Proceed with destructive operation? <y/n>: " 1>&2
-  read CONFIRM
-  if [[ ${CONFIRM} == 'n' || ${CONFIRM} == 'N' ]]; then
-    echo "Aborted!" 1>&2
-    exit 1
+# satellite user has a cron job to create the dynconf file
+# this shouldn't be root (doesn't need full root privs)
+# nor should it be the httpd user (httpd could escalate to root by rewriting its config)
+SATELLITE_USER=satellite
+
+# group of the httpd account, allows write access to the state database.
+HTTPD_GROUP=www-data
+
+# do stuff
+cd $( dirname $0 )
+
+# just in case someone forgot to do this.
+git submodule update --init --remote
+
+if [[ -e deployment ]]; then
+  echo "Directory 'deployment' already exists. Remove it and try again." 1>&2
+  exit 2
+fi
+mkdir deployment
+for D in bin cgi var dynconf html html/static etc; do
+  mkdir deployment/${D}
+done
+
+if [[ ${UID} -eq 0 ]]; then
+  chown ${SATELLITE_USER}:root deployment/dynconf
+  chown root:${HTTPD_GROUP} deployment/var
+  if [[ ! -e deployment/var/state.sqlite ]]; then
+    cat satellite-upstream/etc/schema-sqlite3.txt | sqlite3 deployment/var/state.sqlite
+    chown root:${HTTPD_GROUP} deployment/var/state.sqlite
+    chmod 660 deployment/var/state.sqlite
   fi
-  CONFIRMCOUNT=$(( ${CONFIRMCOUNT} - 1 ))
-  if [[ ${CONFIRMCOUNT} -le 1 ]]; then
-    echo "Aborted! Too many invalid responses." 1>&2
-    exit 1
-  fi
+fi
+
+# set perms
+chmod 700 deployment/dynconf
+chmod 5770 deployment/var
+
+# copy upstream
+cp satellite-upstream/bin/* deployment/bin/
+cp satellite-upstream/cgi/* deployment/cgi/
+cp -r satellite-upstream/html/* deployment/html/
+cp satellite-upstream/var/* deployment/var/
+cp satellite-upstream/etc/* deployment/etc/
+
+# copy customizations
+for I in $( cd customizations; ls ); do
+  cp -rf customizations/${I}/* deployment/${I}
 done
 
 
-# do stuff
-
-
-
+echo "Success!"

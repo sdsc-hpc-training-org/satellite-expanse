@@ -6,7 +6,7 @@ This repo contains the expanse-specific config for satellite
 There's a sub-repo to pull in the upstream satellite repo. To use this either
   ```
   git clone ...
-  git submodule update --init
+  git submodule update --init --remote
   ```
 
   or
@@ -15,11 +15,13 @@ There's a sub-repo to pull in the upstream satellite repo. To use this either
 
 # Deploy
 
-The mkdeployment script will turn the current repo into a production deployment, suitable for `/var/www/satellite`.  This means:
-1. Init and update submodule, in case someone forgot to do that.
-2. Remove .git directories.
-3. Merge upstream and customizations.
-4. Set permissions.
+The mkdeployment script will produce a production deployment in a directory called 'deployment', suitable for `/var/www/satellite`.  This means:
+1. Init and update submodule (with latest changes), in case someone forgot to do that.
+2. Create `deployment` directory.
+3. Merge upstream and customizations in `deployment`.
+4. Set ownership if root.
+5. Create empty state database in `deployment/var`.
+6. Set permissions.
 
 
 
