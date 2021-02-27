@@ -11,9 +11,6 @@ umask 0022
 # nor should it be the httpd user (httpd could escalate to root by rewriting its config)
 SATELLITE_USER=satellite
 
-# group of the httpd account, allows write access to the state database.
-HTTPD_GROUP=www-data
-
 # do stuff
 cd $( dirname $0 )
 
@@ -31,17 +28,10 @@ done
 
 if [[ ${UID} -eq 0 ]]; then
   chown ${SATELLITE_USER}:root deployment/dynconf
-  chown root:${HTTPD_GROUP} deployment/var
-  if [[ ! -e deployment/var/state.sqlite ]]; then
-    cat satellite-upstream/etc/schema-sqlite3.txt | sqlite3 deployment/var/state.sqlite
-    chown root:${HTTPD_GROUP} deployment/var/state.sqlite
-    chmod 660 deployment/var/state.sqlite
-  fi
 fi
 
 # set perms
 chmod 700 deployment/dynconf
-chmod 5770 deployment/var
 
 # copy upstream
 cp satellite-upstream/bin/* deployment/bin/
