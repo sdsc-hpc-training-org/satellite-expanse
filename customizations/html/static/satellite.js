@@ -1,7 +1,7 @@
 var starttl = 100;
 var ttl = 100;
 var refilling = false;
-var tokenstateurl = 'https://expanse-user-content.sdsc.edu/tokenjobstate.cgi?';
+var tokenstateurl = 'https://expanse-user-content.sdsc.edu/tokenjobstate.cgi?token=';
 
 window.addEventListener('DOMContentLoaded', () => {
     window.setInterval(countdownReload,200);
